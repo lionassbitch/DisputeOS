@@ -57,6 +57,7 @@ export const disputeCandidates = mysqlTable("dispute_candidates", {
   complianceFlag: boolean("complianceFlag").default(true).notNull(),
   recommendedRound: int("recommendedRound").default(1).notNull(),
   deadlineStatus: mysqlEnum("deadlineStatus", ["pending", "active", "approaching", "overdue", "resolved"]).default("pending").notNull(),
+  suggestedStrategy: mysqlEnum("suggestedStrategy", ["standard", "metro2_compliance", "procedural_violation", "verification_demand", "validation_demand", "advanced_legal"]).default("standard").notNull(),
   userStatus: mysqlEnum("userStatus", ["pending_review", "approved", "rejected", "edited"]).default("pending_review").notNull(),
   userNotes: text("userNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

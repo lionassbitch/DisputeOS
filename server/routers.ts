@@ -7,6 +7,7 @@ import * as db from "./db";
 import { storagePut } from "./storage";
 import { analyzeCreditReport, generateDisputeLetter } from "./disputeEngine";
 import { getMailProvider } from "./mailProvider";
+import { DISPUTE_STRATEGIES, ADVANCED_SUB_STRATEGIES } from "./metro2";
 
 export const appRouter = router({
   system: systemRouter,
@@ -203,6 +204,7 @@ export const appRouter = router({
             complianceFlag: c.complianceFlag,
             recommendedRound: c.recommendedRound,
             deadlineStatus: c.deadlineStatus as "pending" | "active" | "approaching" | "overdue" | "resolved",
+            suggestedStrategy: (c.suggestedStrategy || "standard") as "standard" | "metro2_compliance" | "procedural_violation" | "verification_demand" | "validation_demand" | "advanced_legal",
           }));
 
           if (candidates.length > 0) {
@@ -365,7 +367,11 @@ export const appRouter = router({
       }),
 
     generate: protectedProcedure
-      .input(z.object({ candidateId: z.number() }))
+      .input(z.object({
+        candidateId: z.number(),
+        strategy: z.enum(["standard", "metro2_compliance", "procedural_violation", "verification_demand", "validation_demand", "advanced_legal"]).default("standard"),
+        subStrategy: z.string().optional(),
+      }))
       .mutation(async ({ ctx, input }) => {
         const candidate = await db.getDisputeCandidateById(input.candidateId);
         if (!candidate || candidate.userId !== ctx.user.id) {
@@ -392,6 +398,8 @@ export const appRouter = router({
             evidenceChecklist: candidate.evidenceChecklist as string[] || [],
           },
           ctx.user.name || "Consumer",
+          input.strategy,
+          input.subStrategy,
         );
 
         const { id } = await db.createDisputeLetter({
@@ -622,6 +630,17 @@ export const appRouter = router({
 
         return { success: true };
       }),
+  }),
+
+  // ─── Strategies ─────────────────────────────────────────────────────────────
+
+  strategies: router({
+    list: protectedProcedure.query(() => {
+      return Object.values(DISPUTE_STRATEGIES);
+    }),
+    subStrategies: protectedProcedure.query(() => {
+      return ADVANCED_SUB_STRATEGIES;
+    }),
   }),
 
   // ─── Follow-Up Rounds ───────────────────────────────────────────────────────

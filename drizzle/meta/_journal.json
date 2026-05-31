@@ -15,6 +15,13 @@
       "when": 1780246312140,
       "tag": "0001_concerned_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780263437335,
+      "tag": "0002_perpetual_jackal",
+      "breakpoints": true
     }
   ]
 }

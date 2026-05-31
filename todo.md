@@ -54,5 +54,14 @@
 - [x] Compliance disclaimer page
 
 ## Deployment
-- [ ] Deploy live website
-- [ ] Push source code to GitHub repository
+- [x] Deploy live website
+- [x] Push source code to GitHub repository (via Management UI GitHub export)
+
+## Metro 2 & Advanced Dispute Strategies
+- [x] Metro 2 compliance attack module (field-level violation detection: date formats, account status codes, payment rating codes, special comment codes, ECOA codes, compliance condition codes, account type codes)
+- [x] Verification vs Validation distinction (FCRA §611 verification vs FDCPA §809(b) validation with separate letter templates)
+- [x] Unorthodox legal dispute strategies (procedural violations, estoppel, laches, UCC Article 9, conditional acceptance, method of verification demands, RESPA qualified written requests, goodwill adjustments, identity theft affidavit, obsolete data, permissible purpose, direct-to-furnisher §623)
+- [x] Advanced verbiage templates (Metro 2 field codes, method of verification disclosure, procedural violations, conditional acceptance, CRRG references)
+- [x] Update dispute engine to identify Metro 2 violations automatically
+- [x] Dispute Strategy selector UI (Standard, Metro 2 Compliance Attack, Procedural Violation, Verification Demand, Validation Demand, Advanced Legal Theory)
+- [ ] Push changes to GitHub

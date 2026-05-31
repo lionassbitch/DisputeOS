@@ -288,6 +288,7 @@ export default function Disputes() {
                   <div><p className="text-xs text-muted-foreground">Recommended Round</p><p className="font-medium">Round {c.recommendedRound}</p></div>
                   <div><p className="text-xs text-muted-foreground">Deadline Status</p><Badge variant="outline">{c.deadlineStatus}</Badge></div>
                   <div><p className="text-xs text-muted-foreground">User Status</p><Badge variant="outline" className={statusColors[c.userStatus]}>{c.userStatus.replace("_", " ")}</Badge></div>
+                  <div><p className="text-xs text-muted-foreground">Suggested Strategy</p><Badge variant="outline" className="text-primary border-primary/30">{((c as any).suggestedStrategy || "standard").replace("_", " ")}</Badge></div>
                   <div><p className="text-xs text-muted-foreground">Created</p><p className="font-medium">{new Date(c.createdAt).toLocaleString()}</p></div>
                 </div>
                 <div><p className="text-xs text-muted-foreground mb-1">Dispute Reason</p><p className="text-sm bg-muted/30 p-3 rounded-lg">{c.disputeReason}</p></div>
@@ -357,30 +358,109 @@ export default function Disputes() {
 }
 
 function GenerateLetterButton({ candidateId }: { candidateId: number }) {
+  const [open, setOpen] = useState(false);
+  const [strategy, setStrategy] = useState<string>("standard");
+  const [subStrategy, setSubStrategy] = useState<string>("");
   const utils = trpc.useUtils();
+
+  const { data: strategies } = trpc.strategies.list.useQuery();
+  const { data: subStrategies } = trpc.strategies.subStrategies.useQuery();
+
   const generateMutation = trpc.letters.generate.useMutation({
     onSuccess: () => {
       utils.letters.list.invalidate();
       utils.dashboard.stats.invalidate();
-      toast.success("Dispute letter generated");
+      toast.success("Dispute letter generated with " + strategy + " strategy");
+      setOpen(false);
     },
     onError: (err) => toast.error(err.message),
   });
 
   return (
-    <Button
-      size="sm"
-      variant="outline"
-      onClick={() => generateMutation.mutate({ candidateId })}
-      disabled={generateMutation.isPending}
-      className="gap-1"
-    >
-      {generateMutation.isPending ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      ) : (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="gap-1"
+      >
         <FileText className="h-3 w-3" />
-      )}
-      Generate Letter
-    </Button>
+        Generate Letter
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Select Dispute Strategy</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium">Strategy</label>
+              <Select value={strategy} onValueChange={setStrategy}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose strategy" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard Factual Dispute</SelectItem>
+                  <SelectItem value="metro2_compliance">Metro 2 Compliance Attack</SelectItem>
+                  <SelectItem value="procedural_violation">Procedural Violation</SelectItem>
+                  <SelectItem value="verification_demand">Verification Demand (FCRA §611)</SelectItem>
+                  <SelectItem value="validation_demand">Validation Demand (FDCPA §809)</SelectItem>
+                  <SelectItem value="advanced_legal">Advanced Legal Theory</SelectItem>
+                </SelectContent>
+              </Select>
+              {strategies && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {strategies.find(s => s.id === strategy)?.description}
+                </p>
+              )}
+            </div>
+            {strategy === "advanced_legal" && subStrategies && (
+              <div>
+                <label className="text-sm font-medium">Sub-Strategy</label>
+                <Select value={subStrategy} onValueChange={setSubStrategy}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Choose legal theory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subStrategies.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {subStrategy && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {subStrategies.find(s => s.id === subStrategy)?.description}
+                  </p>
+                )}
+              </div>
+            )}
+            {strategies && (
+              <div className="p-3 rounded-lg bg-muted/30 border">
+                <p className="text-xs font-medium mb-1">Legal Basis</p>
+                <div className="flex flex-wrap gap-1">
+                  {strategies.find(s => s.id === strategy)?.legalBasis.map((l, i) => (
+                    <Badge key={i} variant="outline" className="text-[10px]">{l}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => generateMutation.mutate({
+                candidateId,
+                strategy: strategy as any,
+                subStrategy: subStrategy || undefined,
+              })}
+              disabled={generateMutation.isPending}
+            >
+              {generateMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Generate Letter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

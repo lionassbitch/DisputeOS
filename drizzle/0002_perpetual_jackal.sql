@@ -1,0 +1,1 @@
+ALTER TABLE `dispute_candidates` ADD `suggestedStrategy` enum('standard','metro2_compliance','procedural_violation','verification_demand','validation_demand','advanced_legal') DEFAULT 'standard' NOT NULL;
