@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1779680442831,
+      "tag": "0000_medical_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1780246312140,
+      "tag": "0001_concerned_dakota_north",
+      "breakpoints": true
+    }
+  ]
 }

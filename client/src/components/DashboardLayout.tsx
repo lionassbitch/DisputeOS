@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -21,21 +22,47 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  PanelLeft,
+  FileText,
+  Search,
+  Mail,
+  Calendar,
+  Shield,
+  Settings,
+  Users,
+  Activity,
+  Workflow,
+} from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
+import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+const userMenuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: FileText, label: "Credit Reports", path: "/reports" },
+  { icon: Search, label: "Dispute Pipeline", path: "/disputes" },
+  { icon: FileText, label: "Letters", path: "/letters" },
+  { icon: Mail, label: "Mail Queue", path: "/mail" },
+  { icon: Calendar, label: "Deadlines", path: "/calendar" },
+  { icon: Shield, label: "Compliance", path: "/compliance" },
+];
+
+const adminMenuItems = [
+  { icon: Activity, label: "Admin Overview", path: "/admin" },
+  { icon: Users, label: "User Management", path: "/admin/users" },
+  { icon: Search, label: "Pipeline (All)", path: "/admin/pipeline" },
+  { icon: Settings, label: "Audit Log", path: "/admin/audit" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
-const DEFAULT_WIDTH = 280;
+const DEFAULT_WIDTH = 260;
 const MIN_WIDTH = 200;
-const MAX_WIDTH = 480;
+const MAX_WIDTH = 400;
 
 export default function DashboardLayout({
   children,
@@ -53,19 +80,20 @@ export default function DashboardLayout({
   }, [sidebarWidth]);
 
   if (loading) {
-    return <DashboardLayoutSkeleton />
+    return <DashboardLayoutSkeleton />;
   }
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
-            </h1>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold tracking-tight">DisputeOS</h1>
+            </div>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              Compliance-first credit dispute management. Sign in to access your dashboard.
             </p>
           </div>
           <Button
@@ -73,9 +101,9 @@ export default function DashboardLayout({
               window.location.href = getLoginUrl();
             }}
             size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
+            className="w-full"
           >
-            Sign in
+            Sign in to continue
           </Button>
         </div>
       </div>
@@ -112,8 +140,18 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const isAdmin = user?.role === "admin";
+
+  const allMenuItems = isAdmin
+    ? [...userMenuItems, ...adminMenuItems]
+    : userMenuItems;
+
+  const activeMenuItem = allMenuItems.find(
+    (item) =>
+      location === item.path ||
+      (item.path !== "/" && location.startsWith(item.path))
+  );
 
   useEffect(() => {
     if (isCollapsed) {
@@ -124,8 +162,8 @@ function DashboardLayoutContent({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-
-      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
+      const sidebarLeft =
+        sidebarRef.current?.getBoundingClientRect().left ?? 0;
       const newWidth = e.clientX - sidebarLeft;
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
         setSidebarWidth(newWidth);
@@ -170,8 +208,9 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                  <Shield className="h-5 w-5 text-primary shrink-0" />
+                  <span className="font-bold tracking-tight truncate">
+                    DisputeOS
                   </span>
                 </div>
               ) : null}
@@ -180,15 +219,17 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
+              {userMenuItems.map((item) => {
+                const isActive =
+                  location === item.path ||
+                  (item.path !== "/" && location.startsWith(item.path));
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+                      className="h-9 transition-all font-normal"
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
@@ -199,6 +240,45 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+
+            {isAdmin && (
+              <>
+                <div className="px-4 py-2 mt-4">
+                  {!isCollapsed && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Admin
+                      </span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        Admin
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                <SidebarMenu className="px-2">
+                  {adminMenuItems.map((item) => {
+                    const isActive =
+                      location === item.path ||
+                      (item.path !== "/" && location.startsWith(item.path));
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className="h-9 transition-all font-normal"
+                        >
+                          <item.icon
+                            className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                          />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="p-3">
@@ -206,21 +286,29 @@ function DashboardLayoutContent({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                     <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
+                      {user?.name || "User"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "-"}
+                      {user?.email || ""}
                     </p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem className="text-xs text-muted-foreground">
+                      Role: Admin
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
@@ -248,16 +336,15 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
               <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="tracking-tight text-foreground text-sm font-medium">
+                  {activeMenuItem?.label ?? "DisputeOS"}
+                </span>
               </div>
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
     </>
   );
